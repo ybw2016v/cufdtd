@@ -39,9 +39,9 @@ int cal(float *P1,float *VX,float *VZ,float *Z0,int xar,int yar,int xm,int ym,in
     xar=xar/sizeof(float);
     yar=yar/sizeof(float);
     size=(ym*yar)*sizeof(float);
-    printf("%d %d %d %d\n",xar,yar,xm,ym);
+    // printf("%d %d %d %d\n",xar,yar,xm,ym);
     // printf("%d \n",size);
-    cudaMallocManaged((void**)&p1, size);
+    // cudaMallocManaged((void**)&p1, size);
     
     cudaMallocManaged((void**)&p1, size);
     cudaMallocManaged((void**)&vx, size);
@@ -59,7 +59,7 @@ int cal(float *P1,float *VX,float *VZ,float *Z0,int xar,int yar,int xm,int ym,in
 
     for (int i = 0; i < n; i++)
     {
-        p1[200*xar+200*yar]+=sin(0.03*n);
+        p1[200*xar+200*yar]=sin(0.008*i);
         cul1<<<ym-2,xm-2>>>(p1,vx,vz,z0,xar,yar,m);
         cudaDeviceSynchronize();
         cul2<<<ym-2,xm-2>>>(p1,vx,vz,z0,xar,yar,m);
