@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 import configparser
+import ctypes
+import math
+import time
+from ctypes import c_float, c_int
+
 import numpy as np
 import numpy.ctypeslib as npct
-import ctypes
-from ctypes import c_int
-from ctypes import c_float
-import time
 from matplotlib import pyplot as plt
-import math
 from progressbar import *
+
 
 def decodeconf(path):
     conf=configparser.ConfigParser()
