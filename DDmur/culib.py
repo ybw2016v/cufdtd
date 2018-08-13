@@ -33,11 +33,10 @@ class caldog(object):
 
         if self.z0.dtype == 'float32':
             print("OK")
-        if conf['自动初值']=='是' or conf['自动初值']=='y' or conf['自动初值']=='yes':
+        if conf['自动初值']=='是' or conf['自动初值']=='y' or conf['自动初值']=='y':
             print('开始自动生成')
             self.p0=np.zeros(np.shape(self.z0),dtype='float32')
             self.vx=np.zeros(np.shape(self.z0),dtype='float32')
-            self.vy=np.zeros(np.shape(self.z0),dtype='float32')
             self.vz=np.zeros(np.shape(self.z0),dtype='float32')
             print('自动生成成功')
         else:
@@ -54,12 +53,6 @@ class caldog(object):
                 print(str(initvx)+'导入成功')
             else:
                 print("警告:数据类型错误。")
-            initvy=conf['vy路径']
-            self.vy=np.load(initvx)
-            if self.vy.dtype == 'float32':
-                print(str(initvy)+'导入成功')
-            else:
-                print("警告:数据类型错误。")
             initvz=conf['vz路径']
             self.vz=np.load(initvz)
             if self.vz.dtype == 'float32':
@@ -70,15 +63,15 @@ class caldog(object):
         self.dd=np.array(np.shape(self.p0),dtype='int32')
         pass
 
-    def loadlib(self,libp=[]):
+    def loadlib(self,libp):
         
-        self.libcd = npct.load_library("calkel3", ".")
-        array_1d_double = npct.ndpointer(dtype=np.float32, ndim=3, flags='CONTIGUOUS')
-        self.libcd.cal.argtypes=[array_1d_double,array_1d_double,array_1d_double,array_1d_double,array_1d_double,c_int,c_int,c_int,c_int,c_int,c_int,c_int,c_int,c_float,c_int]
+        self.libcd = npct.load_library("calkel2", ".")
+        array_1d_double = npct.ndpointer(dtype=np.float32, ndim=2, flags='CONTIGUOUS')
+        self.libcd.cal.argtypes=[array_1d_double,array_1d_double,array_1d_double,array_1d_double,c_int,c_int,c_int,c_int,c_int,c_int,c_float,c_int]
         self.libcd.cal.restype=c_int
         pass
     def calcal(self,start,end):
-        self.libcd.cal(self.p0,self.vx,self.vy,self.vz,self.z0,self.ff[2],self.ff[1],self.ff[0],self.dd[2],self.dd[1],self.dd[0],start,end,self.m,0)
+        self.libcd.cal(self.p0,self.vx,self.vz,self.z0,self.ff[1],self.ff[0],self.dd[1],self.dd[0],start,end,self.m,0)
         pass
 
     def cal(self):
@@ -90,14 +83,12 @@ class caldog(object):
             self.calcal(c,c+a)
             np.save(str(self.outpath)+'p0_'+str(numtime),self.p0)
             np.save(str(self.outpath)+'vx_'+str(numtime),self.vx)
-            np.save(str(self.outpath)+'vy_'+str(numtime),self.vy)
             np.save(str(self.outpath)+'vz_'+str(numtime),self.vz)
             c=c+a
             pass
         self.calcal(c,c+b)
         np.save(self.outpath+'p0_'+str(a),self.p0)
         np.save(self.outpath+'vx_'+str(a),self.vx)
-        np.save(self.outpath+'vy_'+str(a),self.vy)
         np.save(self.outpath+'vz_'+str(a),self.vz)
         pass
     
