@@ -21,7 +21,15 @@ __global__ void cul1(float * p1j,float * vx1j,float * vz1j,float *z0j,float *lx,
     }
     if(j==1)
     {
-        lx[i]=p1j[(j)*yr+i*xr];
+        if (i>0&&j<blockDim.x-1)
+        {
+            lx[i]=p1j[(j)*yr+i*xr];
+        }
+        else 
+        {
+            lx[i]=0;
+        }
+        
     }
     if(j==gridDim.x-2)
     {
@@ -29,6 +37,7 @@ __global__ void cul1(float * p1j,float * vx1j,float * vz1j,float *z0j,float *lx,
     }
     if (i==1)
     {
+
         ly[j]=p1j[(j)*yr+i*xr];
     }
     if (i==blockDim.x-2)
@@ -48,30 +57,30 @@ __global__ void cul2(float * p1j,float * vx1j,float * vz1j,float *z0j,float *lx,
     if (j==0)
     {
         float dog;
-        dog=lx[i]-(vx1j[(j+2)*yr+i*xr]-vx1j[(j+1)*yr+i*xr]+vz1j[(j+1)*yr+i*xr]-vz1j[(j+1)*yr+(i-1)*xr])*z0j[j*yr+i*xr]/m;
+        dog=lx[i]-(vx1j[(j+1)*yr+(i+1)*xr]-vx1j[(j+1)*yr+i*xr]+vz1j[(j+1)*yr+i*xr]-vz1j[(j)*yr+(i)*xr])*z0j[j*yr+i*xr]/m;
         p1j[j*yr+i*xr]=lx[i]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr]);    
     }
 
-    else if(j==gridDim.x-1)
+    if(j==gridDim.x-1)
     {
         float dog;
-        dog=lx[blockDim.x+i]-(vx1j[(j)*yr+i*xr]-vx1j[(j-1)*yr+i*xr]+vz1j[(j-1)*yr+i*xr]-vz1j[(j-1)*yr+(i-1)*xr])*z0j[j*yr+i*xr]/m;
+        dog=lx[blockDim.x+i]-(vx1j[(j-1)*yr+(i+1)*xr]-vx1j[(j-1)*yr+i*xr]+vz1j[(j-1)*yr+i*xr]-vz1j[(j-2)*yr+(i)*xr])*z0j[j*yr+i*xr]/m;
         p1j[j*yr+i*xr]=lx[blockDim.x+i]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr]); 
     }
-    else if (i==0)
+    if (i==0)
     {
         float dog;
-        dog=ly[i]-(vx1j[(j+1)*yr+(i+1)*xr]-vx1j[(j)*yr+(i+1)*xr]+vz1j[(j)*yr+(i+1)*xr]-vz1j[(j)*yr+(i)*xr])*z0j[j*yr+i*xr]/m;
-        p1j[j*yr+i*xr]=ly[i]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr]);    
+        dog=ly[j]-(vx1j[j*yr+(i+2)*xr]-vx1j[j*yr+(i+1)*xr]+vz1j[j*yr+(i+1)*xr]-vz1j[(j-1)*yr+(i+1)*xr])*z0j[j*yr+i*xr]/m;
+        p1j[j*yr+i*xr]=ly[j]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr]);    
 
     }
-    else if (i==blockDim.x-1)
+    if (i==blockDim.x-1)
     {
         float dog;
-        dog=lx[gridDim.x+j]-(vx1j[(j+1)*yr+(i-1)*xr]-vx1j[(j)*yr+(i-1)*xr]+vz1j[(j)*yr+(i-1)*xr]-vz1j[(j)*yr+(i-2)*xr])*z0j[j*yr+i*xr]/m;
+        dog=lx[gridDim.x+j]-(vx1j[j*yr+(i)*xr]-vx1j[j*yr+(i-1)*xr]+vz1j[j*yr+(i-1)*xr]-vz1j[(j-1)*yr+(i-1)*xr])*z0j[j*yr+i*xr]/m;
         p1j[j*yr+i*xr]=lx[blockDim.x+j]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr]);
     }
-    else
+    if((i<blockDim.x-1)&&(i>0)&&(j>0)&&(j<gridDim.x-1))
     {
     p1j[j*yr+i*xr]-=(vx1j[j*yr+(i+1)*xr]-vx1j[j*yr+i*xr]+vz1j[j*yr+i*xr]-vz1j[(j-1)*yr+i*xr])*z0j[j*yr+i*xr]/m;
     }
@@ -81,6 +90,7 @@ __global__ void cul2(float * p1j,float * vx1j,float * vz1j,float *z0j,float *lx,
 int cal(float *P1,float *VX,float *VZ,float *Z0,float *LX,float *LZ,int xar,int yar,int xm,int ym,int n,int n2,float m,int flag)
 {
     // printf("%f %f %f\n",m,P1[400],Z0[400]);
+    // printf("%s \n","OK");
     int size;
     float * p1=NULL;
     float * vx=NULL;
@@ -104,6 +114,7 @@ int cal(float *P1,float *VX,float *VZ,float *Z0,float *LX,float *LZ,int xar,int 
     cudaMallocManaged((void**)&z0, size);
     cudaMallocManaged((void**)&lx, 2*xm*sizeof(float));
     cudaMallocManaged((void**)&lz, 2*ym*sizeof(float));
+    
     cudaDeviceSynchronize();
     // printf("%hd \n",p1);
     memcpy(p1,P1,size);
@@ -118,10 +129,10 @@ int cal(float *P1,float *VX,float *VZ,float *Z0,float *LX,float *LZ,int xar,int 
     cudaDeviceSynchronize();
     for (int i = n; i < n2; i++)
     {
-        p1[200*xar+200*yar]=sin(0.008*i);
-        cul1<<<ym-2,xm-2>>>(p1,vx,vz,z0,lx,lz,xar,yar,m);
+        p1[200*xar+200*yar]=sin(0.08*i);
+        cul1<<<ym,xm>>>(p1,vx,vz,z0,lx,lz,xar,yar,m);
         cudaDeviceSynchronize();
-        cul2<<<ym-2,xm-2>>>(p1,vx,vz,z0,lx,lz,xar,yar,m);
+        cul2<<<ym,xm>>>(p1,vx,vz,z0,lx,lz,xar,yar,m);
         cudaDeviceSynchronize();
     }
     cudaDeviceSynchronize();
@@ -138,11 +149,14 @@ int cal(float *P1,float *VX,float *VZ,float *Z0,float *LX,float *LZ,int xar,int 
     memcpy(P1,p1,size);
     memcpy(VX,vx,size);
     memcpy(VZ,vz,size);
-
+    memcpy(LX,lx,2*xm*sizeof(float));
+    memcpy(LZ,lz,2*ym*sizeof(float));
     cudaFree(p1);
     cudaFree(vx);
     cudaFree(vz);
     cudaFree(z0);
+    cudaFree(lx);
+    cudaFree(lz);
     
     return 0;
 }
