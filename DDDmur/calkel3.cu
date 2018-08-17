@@ -18,9 +18,18 @@ __global__ void cul1(float * p1j,float * vx1j,float * vy1j,float * vz1j,float *z
 
     if ((i>=1)&&(i<=blockDim.x-2)&&(j>=1)&&(j<=gridDim.x-2)&&(k>=1)&&(k<=gridDim.y-2))
     {
-    vx1j[j*yr+i*xr+k*zr]-=(p1j[j*yr+i*xr+k*zr]-p1j[j*yr+(i-1)*xr+k*zr])/z0j[j*yr+i*xr+k*zr]/m;
-    vy1j[j*yr+i*xr+k*zr]-=(p1j[(j+1)*yr+i*xr+k*zr]-p1j[j*yr+(i)*xr+k*zr])/z0j[j*yr+i*xr+k*zr]/m;
-    vz1j[j*yr+i*xr+k*zr]-=(p1j[(j)*yr+i*xr+(k+1)*zr]-p1j[j*yr+(i)*xr+k*zr])/z0j[j*yr+i*xr+k*zr]/m;
+        if (z0j[j*yr+i*xr+k*zr]==0)
+        {
+            vx1j[j*yr+i*xr+k*zr]=0;
+            vy1j[j*yr+i*xr+k*zr]=0;
+            vz1j[j*yr+i*xr+k*zr]=0;
+        }
+        else
+        {
+            vx1j[j*yr+i*xr+k*zr]-=(p1j[j*yr+i*xr+k*zr]-p1j[j*yr+(i-1)*xr+k*zr])/z0j[j*yr+i*xr+k*zr]/m;
+            vy1j[j*yr+i*xr+k*zr]-=(p1j[(j+1)*yr+i*xr+k*zr]-p1j[j*yr+(i)*xr+k*zr])/z0j[j*yr+i*xr+k*zr]/m;
+            vz1j[j*yr+i*xr+k*zr]-=(p1j[(j)*yr+i*xr+(k+1)*zr]-p1j[j*yr+(i)*xr+k*zr])/z0j[j*yr+i*xr+k*zr]/m;
+        }
     }
     else if (i==0)
     {
@@ -66,47 +75,57 @@ __global__ void cul2(float * p1j,float * vx1j,float * vy1j,float * vz1j,float *z
     k=blockIdx.y;
     if((i>=1)&&(i<=blockDim.x-2)&&(j>=1)&&(j<=gridDim.x-2)&&(k>=1)&&(k<=gridDim.y-2))
     {
-        if(i==1)
+        if((i==1)&&(j>=2)&&(k>=2))
         {
             float dog;
             dog=p1j[j*yr+(i-1)*xr+k*zr]-(vx1j[j*yr+(i+2)*xr+k*zr]-vx1j[j*yr+(i+1)*xr+k*zr]+vy1j[j*yr+(i+1)*xr+k*zr]-vy1j[(j-1)*yr+(i+1)*xr+k*zr]+vz1j[j*yr+(i+1)*xr+k*zr]-vz1j[(j)*yr+(i+1)*xr+(k-1)*zr])*z0j[j*yr+(i+1)*xr+k*zr]/m;
             p1j[j*yr+i*xr+k*zr]=p1j[j*yr+(i-1)*xr+k*zr]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr+k*zr]);
         }
-        else if (i==blockDim.x-2)
+        else if ((i==blockDim.x-2)&&(j>=2)&&(k>=2))
         {
             float dog;
             dog=p1j[j*yr+(i+1)*xr+k*zr]-(vx1j[j*yr+(i)*xr+k*zr]-vx1j[j*yr+(i-1)*xr+k*zr]+vy1j[j*yr+(i-1)*xr+k*zr]-vy1j[(j-1)*yr+(i-1)*xr+k*zr]+vz1j[j*yr+(i-1)*xr+k*zr]-vz1j[(j)*yr+(i-1)*xr+(k-1)*zr])*z0j[j*yr+(i-1)*xr+k*zr]/m;
             p1j[j*yr+i*xr+k*zr]=p1j[j*yr+(i+1)*xr+k*zr]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr+k*zr]);
         }
-        else if (j==1)
+        else if ((j==1)&&(i<=blockDim.x-3)&&(k>=2))
         {
             float dog;
-            dog=p1j[(j-1)*yr+i*xr+k*zr]-(vx1j[(j+1)*yr+(i+1)*xr+k*zr]-vx1j[(+1)*yr+i*xr+k*zr]+vy1j[(j+1)*yr+i*xr+k*zr]-vy1j[(j)*yr+i*xr+k*zr]+vz1j[(j+1)*yr+i*xr+k*zr]-vz1j[(j+1)*yr+i*xr+(k-1)*zr])*z0j[(j+1)*yr+i*xr+k*zr]/m;
+            dog=p1j[(j-1)*yr+i*xr+k*zr]-(vx1j[(j+1)*yr+(i+1)*xr+k*zr]-vx1j[(j+1)*yr+i*xr+k*zr]+vy1j[(j+1)*yr+i*xr+k*zr]-vy1j[(j)*yr+i*xr+k*zr]+vz1j[(j+1)*yr+i*xr+k*zr]-vz1j[(j+1)*yr+i*xr+(k-1)*zr])*z0j[(j+1)*yr+i*xr+k*zr]/m;
             p1j[j*yr+i*xr+k*zr]=p1j[(j-1)*yr+i*xr+k*zr]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr+k*zr]);
+            // if((i<=2)||(i>=blockDim.x-3)||(k<=2)||(k>=gridDim.y-3))
+            // {
+            //     p1j[j*yr+i*xr+k*zr]=0;
+            //     // printf("%s \n","ok");
+            // }
+            // else
+            // {
+            //     p1j[j*yr+i*xr+k*zr]=0;//p1j[(j-1)*yr+i*xr+k*zr]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr+k*zr]);
+            // }
         }
-        else if (j==gridDim.x-2)
+        else if ((j==gridDim.x-2)&&(i<=blockDim.x-3)&&(k>=2))
         {
             float dog;
             dog=p1j[(j+1)*yr+i*xr+k*zr]-(vx1j[(j-1)*yr+(i+1)*xr+k*zr]-vx1j[(j-1)*yr+i*xr+k*zr]+vy1j[(j-1)*yr+i*xr+k*zr]-vy1j[(j-2)*yr+i*xr+k*zr]+vz1j[(j-1)*yr+i*xr+k*zr]-vz1j[(j-1)*yr+i*xr+(k-1)*zr])*z0j[(j-1)*yr+i*xr+k*zr]/m;
             p1j[j*yr+i*xr+k*zr]=p1j[(j+1)*yr+i*xr+k*zr]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr+k*zr]);
         }
-        else if (k==1)
+        else if ((k==1)&&(i<=blockDim.x-3)&&(j>=2))
         {
             float dog;
             dog=p1j[j*yr+i*xr+(k-1)*zr]-(vx1j[j*yr+(i+1)*xr+(k+1)*zr]-vx1j[j*yr+i*xr+(k+1)*zr]+vy1j[j*yr+i*xr+(k+1)*zr]-vy1j[(j-1)*yr+i*xr+(k+1)*zr]+vz1j[j*yr+i*xr+(k+1)*zr]-vz1j[(j)*yr+i*xr+(k)*zr])*z0j[j*yr+i*xr+(k+1)*zr]/m;
-            p1j[j*yr+i*xr+k*zr]=p1j[(j-1)*yr+i*xr+k*zr]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr+k*zr]);
+            p1j[j*yr+i*xr+k*zr]=p1j[(j)*yr+i*xr+(k-1)*zr]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr+k*zr]);
+            // 坏事
         }
-        else if(k==gridDim.y-2)
+        else if((k==gridDim.y-2)&&(i<=blockDim.x-3)&&(j>=2))
         {
             float dog;
             dog=p1j[j*yr+i*xr+(k+1)*zr]-(vx1j[j*yr+(i+1)*xr+(k-1)*zr]-vx1j[j*yr+i*xr+(k-1)*zr]+vy1j[j*yr+i*xr+(k-1)*zr]-vy1j[(j-1)*yr+i*xr+(k-1)*zr]+vz1j[j*yr+i*xr+(k-1)*zr]-vz1j[(j)*yr+i*xr+(k-2)*zr])*z0j[j*yr+i*xr+(k-1)*zr]/m;
-            p1j[j*yr+i*xr+k*zr]=p1j[(j+1)*yr+i*xr+k*zr]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr+k*zr]);
+            p1j[j*yr+i*xr+k*zr]=p1j[(j)*yr+i*xr+(k+1)*zr]+(1.0-m)/(1.0+m)*(dog-p1j[j*yr+i*xr+k*zr]);
+            // 坏事
         }
-
-
         else if ((i>=2)&&(i<=blockDim.x-3)&&(j>=2)&&(j<=gridDim.x-3)&&(k>=2)&&(k<=gridDim.y-3))
         {
         p1j[j*yr+i*xr+k*zr]-=(vx1j[j*yr+(i+1)*xr+k*zr]-vx1j[j*yr+i*xr+k*zr]+vy1j[j*yr+i*xr+k*zr]-vy1j[(j-1)*yr+i*xr+k*zr]+vz1j[j*yr+i*xr+k*zr]-vz1j[(j)*yr+i*xr+(k-1)*zr])*z0j[j*yr+i*xr+k*zr]/m;
+        // printf("%s \n","OK");
         }
     }
 }
@@ -146,10 +165,11 @@ int cal(float *P1,float *VX,float *VY,float *VZ,float *Z0,int xar,int yar,int za
     memcpy(z0,Z0,size);
     // printf("%s \n", "OK");
     cudaDeviceSynchronize();
+    dim3 dog(ym,zm);
     for (int i = n; i < n2; i++)
     {
-        p1[128*xar+128*yar+128*zar]=sin(0.008*i);
-        dim3 dog(ym,zm);
+        p1[64*xar+64*yar+64*zar]=sin(0.1*i);
+        
         cul1<<<dog,xm>>>(p1,vx,vy,vz,z0,xar,yar,zar,m);
         cudaDeviceSynchronize();
         cul2<<<dog,xm>>>(p1,vx,vy,vz,z0,xar,yar,zar,m);
@@ -175,7 +195,7 @@ int cal(float *P1,float *VX,float *VY,float *VZ,float *Z0,int xar,int yar,int za
     cudaFree(vz);
     cudaFree(vy);
     cudaFree(z0);
-    
+    cudaDeviceReset();
     return 0;
 }
 
