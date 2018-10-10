@@ -6,6 +6,7 @@ extern "C"
     int cal(float *P1,float *VX,float *VY,float *VZ,float *Z0,int xar,int yar,int zar,int xm,int ym,int zm,int n,int n2,float m,int flag);
 }
 
+void usercode(float * p1j,float * vx1j,float * vy1j,float * vz1j,float *z0j,int xr, int yr,int zr,float m,int i);
 
 __global__ void cul1(float * p1j,float * vx1j,float * vy1j,float * vz1j,float *z0j,int xr, int yr,int zr,float m)
 {
@@ -168,7 +169,8 @@ int cal(float *P1,float *VX,float *VY,float *VZ,float *Z0,int xar,int yar,int za
     dim3 dog(ym,zm);
     for (int i = n; i < n2; i++)
     {
-        p1[64*xar+64*yar+64*zar]=sin(0.1*i);
+        usercode(p1,vx,vy,vz,z0,xar,yar,zar,m,i);
+        // p1[64*xar+64*yar+64*zar]=sin(0.1*i);
         
         cul1<<<dog,xm>>>(p1,vx,vy,vz,z0,xar,yar,zar,m);
         cudaDeviceSynchronize();
@@ -199,3 +201,4 @@ int cal(float *P1,float *VX,float *VY,float *VZ,float *Z0,int xar,int yar,int za
     return 0;
 }
 
+// ** //

@@ -3,6 +3,7 @@ import configparser
 import ctypes
 import math
 import time
+import os
 from ctypes import c_float, c_int
 
 import numpy as np
@@ -32,7 +33,7 @@ class caldog(object):
         self.N=conf['计算时间']
         # print(self.N)
         self.outpath=conf['输出路径']
-
+        self.useraddpath=conf['添加方式']
         if self.z0.dtype == 'float32':
             print("OK")
         if conf['自动初值']=='是' or conf['自动初值']=='y' or conf['自动初值']=='y':
@@ -66,6 +67,11 @@ class caldog(object):
         self.dd=np.array(np.shape(self.p0),dtype='int32')
         self.lx=np.zeros(2*self.dd[1],dtype='float32')
         self.lz=np.zeros(2*self.dd[0],dtype='float32')
+        with open(self.useraddpath, 'r') as f:
+            self.useradd=f.read()
+        with open('calkel.cu','a+') as f:
+            f.write(self.useradd)
+        os.system('make')
         pass
 
     def loadlib(self,libp):
